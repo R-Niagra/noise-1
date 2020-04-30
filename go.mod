@@ -1,4 +1,4 @@
-module github.com/mbilal92/noise
+module github.com/R-Niagra/noise-1
 
 go 1.13
 
