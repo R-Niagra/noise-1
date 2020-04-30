@@ -4,6 +4,7 @@ package relay
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync/atomic"
 
@@ -93,7 +94,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 
 	// peers := p.overlay.Find(msg.To)
 	peers := p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay)
-
+	fmt.Println("Peers to send to:", peers)
 	// fmt.Printf("Relay Peers %v\n", peers)
 	// var wg sync.WaitGroup
 	// wg.Add(len(peers))
@@ -108,8 +109,12 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 				// fmt.Printf("Relay ID %v Alread seen Msg %v\n", id, hex.EncodeToString(key))
 				return
 			}
+			if len(key) > 64000 {
+				fmt.Printf("torture Relay ID %v hash %v\n", id, len(key))
 
-			// fmt.Printf("Relay ID %v hash %v\n", id, hex.EncodeToString(key))
+			} else {
+				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", id, len(key), hex.EncodeToString(key))
+			}
 			if err := p.node.SendMessage(ctx, id.Address, msg); err != nil {
 				// fmt.Printf("Relay send msg Fucked %v\n", err)
 				return
@@ -158,7 +163,7 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 		}
 		p.relayChan <- msg
 	} else {
-		// fmt.Println("Relay Handle Relaying further")
+		fmt.Println("Starting torture go-routine....")
 		go p.Relay(context.TODO(), msg, false)
 	}
 
