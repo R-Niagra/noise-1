@@ -173,6 +173,27 @@ func (t *Table) AddressFromPK(target noise.PublicKey) string {
 	return ""
 }
 
+//AddressFromPK2 returns the address from pk using string comparison
+func (t *Table) AddressFromPK2(target noise.PublicKey) string {
+	t.Lock()
+	defer t.Unlock()
+	// var tatgetPublicKey noise.PublicKey
+	// copy(tatgetPublicKey[:], target)
+
+	for _, bucket := range t.entries {
+		for e := bucket.Front(); e != nil; e = e.Next() {
+			id := e.Value.(noise.ID)
+
+			if id.ID.String() == target.String() {
+				// bucket.Remove(e)
+				return id.Address
+			}
+		}
+	}
+
+	return ""
+}
+
 // Peers returns BucketSize closest peer IDs to the ID which this routing table's distance metric is defined against.
 func (t *Table) Peers() []noise.ID {
 	return t.FindClosest(t.self.ID, BucketSize)

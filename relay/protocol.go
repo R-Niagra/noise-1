@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/R-Niagra/noise-1"
 	"github.com/R-Niagra/noise-1/kademlia"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 const (
@@ -85,9 +85,14 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	p.seen.SetBig(p.hash(p.node.ID(), data), nil)
 
 	localPeerAddress := p.overlay.Table().AddressFromPK(msg.To)
+	fmt.Println(".")
+	fmt.Println("Local peer add for relay:- ", localPeerAddress, "by str comp:- ", p.overlay.Table().AddressFromPK2(msg.To))
+	fmt.Println("Closest: ", p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay))
+	fmt.Println(".")
+
 	if localPeerAddress != "" {
 		if err := p.node.SendMessage(ctx, localPeerAddress, msg); err != nil {
-			// fmt.Printf("Relay send msg Fucked %v\n", err)
+			fmt.Printf("Relay local send msg Fucked %v\n", err)
 		}
 		return
 	}
@@ -95,6 +100,11 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	// peers := p.overlay.Find(msg.To)
 	peers := p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay)
 	fmt.Println("Peers to send to:", peers)
+
+	// for _, p := range peers{
+
+	// }
+
 	// fmt.Printf("Relay Peers %v\n", peers)
 	// var wg sync.WaitGroup
 	// wg.Add(len(peers))
