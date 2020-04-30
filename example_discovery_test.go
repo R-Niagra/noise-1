@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/kademlia"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/kademlia"
 )
 
 // This example demonstrates how to use Kademlia to have three peers Alice, Charlie and bob discover

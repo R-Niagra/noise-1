@@ -1,6 +1,6 @@
 package broadcast
 
-import "github.com/mbilal92/noise"
+import "github.com/R-Niagra/noise-1"
 
 // Events comprise of callbacks that may be hooked against by a user to handle inbound gossip messages/events that
 // occur throughout the lifecycle of this gossip protocol.

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 	"go.uber.org/zap"
 )
 

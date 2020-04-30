@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // Ping represents an empty ping message.

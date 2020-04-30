@@ -15,9 +15,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/kademlia"
-	"github.com/mbilal92/noise/payload"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/kademlia"
+	"github.com/R-Niagra/noise-1/payload"
 	"github.com/spf13/pflag"
 )
 

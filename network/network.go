@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/broadcast"
-	"github.com/mbilal92/noise/kademlia"
-	"github.com/mbilal92/noise/relay"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/broadcast"
+	"github.com/R-Niagra/noise-1/kademlia"
+	"github.com/R-Niagra/noise-1/relay"
 	"go.uber.org/zap"
-	// "github.com/mbilal92/noise/broadcast"
-	// "github.com/mbilal92/noise/relay"
+	// "github.com/R-Niagra/noise-1/broadcast"
+	// "github.com/R-Niagra/noise-1/relay"
 )
 
 const (

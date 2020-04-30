@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // ChatMessage is an example struct that is registered on example nodes, and serialized/deserialized on-the-fly.

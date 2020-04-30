@@ -8,7 +8,7 @@ import (
 	"testing"
 	"testing/quick"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 	"github.com/stretchr/testify/assert"
 )
 

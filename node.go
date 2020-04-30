@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mbilal92/noise/nat"
+	"github.com/R-Niagra/noise-1/nat"
 	"github.com/oasislabs/ed25519"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"

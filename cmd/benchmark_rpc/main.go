@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 func check(err error) {

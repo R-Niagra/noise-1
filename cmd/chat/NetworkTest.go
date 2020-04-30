@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/network"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/network"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 )

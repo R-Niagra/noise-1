@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // Table represents a Kademlia routing table.

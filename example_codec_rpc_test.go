@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // This example demonstrates sending registered serialized Go types as requests, decoding registered serialized

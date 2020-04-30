@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/payload"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/payload"
 )
 
 type Message struct {

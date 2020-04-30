@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // This example demonstrates how to send and receive raw bytes across peers, how to listen for incoming peers, and

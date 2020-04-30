@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // This example demonstrates how to send/handle RPC requests across peers, how to listen for incoming peers, how

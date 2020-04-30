@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 	"github.com/oasislabs/ed25519"
 	"github.com/stretchr/testify/assert"
 )

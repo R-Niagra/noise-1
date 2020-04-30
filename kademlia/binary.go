@@ -5,7 +5,7 @@ import (
 	"math/bits"
 	"sort"
 
-	"github.com/mbilal92/noise"
+	"github.com/R-Niagra/noise-1"
 )
 
 // XOR allocates a new byte slice with the computed result of XOR(a, b).

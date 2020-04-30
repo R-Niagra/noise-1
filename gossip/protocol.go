@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/VictoriaMetrics/fastcache"
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/kademlia"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/kademlia"
 )
 
 const (

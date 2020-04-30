@@ -1,6 +1,6 @@
 package kademlia
 
-import "github.com/mbilal92/noise"
+import "github.com/R-Niagra/noise-1"
 
 // Events comprise of callbacks that are to be called upon the encountering of various events as a node follows
 // the Kademlia protocol. An Events declaration may be registered to a Protocol upon instantiation through calling

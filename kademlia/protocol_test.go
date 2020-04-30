@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mbilal92/noise"
-	"github.com/mbilal92/noise/kademlia"
+	"github.com/R-Niagra/noise-1"
+	"github.com/R-Niagra/noise-1/kademlia"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
