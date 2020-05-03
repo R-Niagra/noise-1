@@ -85,10 +85,10 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	p.seen.SetBig(p.hash(p.node.ID(), data), nil)
 
 	localPeerAddress := p.overlay.Table().AddressFromPK(msg.To)
-	fmt.Println(".")
-	fmt.Println("Local peer add for relay:- ", localPeerAddress, "by str comp:- ", p.overlay.Table().AddressFromPK2(msg.To))
-	fmt.Println("Closest: ", p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay))
-	fmt.Println(".")
+	// fmt.Println(".")
+	// fmt.Println("Local peer add for relay:- ", localPeerAddress, "by str comp:- ", p.overlay.Table().AddressFromPK2(msg.To))
+	// fmt.Println("Closest: ", p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay))
+	// fmt.Println(".")
 
 	if localPeerAddress != "" {
 		if err := p.node.SendMessage(ctx, localPeerAddress, msg); err != nil {
@@ -99,7 +99,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 
 	// peers := p.overlay.Find(msg.To)
 	peers := p.overlay.Table().FindClosest(msg.To, DefaultPeerToSendRelay)
-	fmt.Println("Peers to send to:", peers)
+	// fmt.Println("Peers to send to:", peers)
 
 	// for _, p := range peers{
 
@@ -112,26 +112,26 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	for _, id := range peers {
 		id, key := id, p.hash(id, data)
 		// key := p.hash(id, data)
-		go func() {
+		go func(gId noise.ID, gKey []byte, gmsg Message) {
 			// defer wg.Done()
 
-			if p.seen.Has(key) {
-				// fmt.Printf("Relay ID %v Alread seen Msg %v\n", id, hex.EncodeToString(key))
+			if p.seen.Has(gKey) {
+				fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", gId, hex.EncodeToString(gKey))
 				return
 			}
-			if len(key) > 64000 {
-				fmt.Printf("torture Relay ID %v hash %v\n", id, len(key))
+			if len(gKey) > 64000 {
+				fmt.Printf("torture Relay ID %v hash %v\n", gId, len(gKey))
 
 			} else {
-				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", id, len(key), hex.EncodeToString(key))
+				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", gId, len(gKey), hex.EncodeToString(gKey))
 			}
-			if err := p.node.SendMessage(ctx, id.Address, msg); err != nil {
+			if err := p.node.SendMessage(ctx, gId.Address, gmsg); err != nil {
 				// fmt.Printf("Relay send msg Fucked %v\n", err)
 				return
 			}
 
-			p.seen.SetBig(key, nil)
-		}()
+			p.seen.SetBig(gKey, nil)
+		}(id, key, msg)
 	}
 
 	// wg.Wait()
@@ -174,7 +174,7 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 		p.relayChan <- msg
 	} else {
 		fmt.Println("Starting torture go-routine....")
-		go p.Relay(context.TODO(), msg, false)
+		p.Relay(context.TODO(), msg, false)
 	}
 
 	// if p.events.OnGossipReceived != nil {
