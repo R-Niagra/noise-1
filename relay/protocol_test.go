@@ -1,109 +1,165 @@
-package relay_test
+package relay
 
 import (
-	"context"
-	"sync"
+	"crypto/sha1"
 	"testing"
 
-	"github.com/R-Niagra/noise-1"
-	"github.com/R-Niagra/noise-1/gossip"
-	"github.com/R-Niagra/noise-1/kademlia"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/goleak"
 )
 
-func TestGossip(t *testing.T) {
-	defer goleak.VerifyNone(t)
+// func TestGossip(t *testing.T) {
+// 	defer goleak.VerifyNone(t)
 
-	nodes := make([]*noise.Node, 0, 22)
-	overlays := make([]*kademlia.Protocol, 0, cap(nodes))
+// 	nodes := make([]*noise.Node, 0, 22)
+// 	overlays := make([]*kademlia.Protocol, 0, cap(nodes))
 
-	seen := make(map[noise.PublicKey]struct{}, cap(nodes))
-	cond := sync.NewCond(&sync.Mutex{})
+// 	seen := make(map[noise.PublicKey]struct{}, cap(nodes))
+// 	cond := sync.NewCond(&sync.Mutex{})
 
-	for i := 0; i < cap(nodes); i++ {
-		node, err := noise.NewNode()
-		assert.NoError(t, err)
-		defer node.Close()
+// 	for i := 0; i < cap(nodes); i++ {
+// 		node, err := noise.NewNode()
+// 		assert.NoError(t, err)
+// 		defer node.Close()
 
-		overlay := kademlia.New()
-		hub := gossip.New(overlay,
-			gossip.WithEvents(
-				gossip.Events{
-					OnGossipReceived: func(sender noise.ID, data []byte) error {
-						cond.L.Lock()
-						seen[node.ID().ID] = struct{}{}
-						cond.Signal()
-						cond.L.Unlock()
+// 		overlay := kademlia.New()
+// 		hub := gossip.New(overlay,
+// 			gossip.WithEvents(
+// 				gossip.Events{
+// 					OnGossipReceived: func(sender noise.ID, data []byte) error {
+// 						cond.L.Lock()
+// 						seen[node.ID().ID] = struct{}{}
+// 						cond.Signal()
+// 						cond.L.Unlock()
 
-						return nil
-					},
-				},
-			),
-		)
+// 						return nil
+// 					},
+// 				},
+// 			),
+// 		)
 
-		node.Bind(
-			overlay.Protocol(),
-			hub.Protocol(),
-		)
+// 		node.Bind(
+// 			overlay.Protocol(),
+// 			hub.Protocol(),
+// 		)
 
-		assert.NoError(t, node.Listen())
+// 		assert.NoError(t, node.Listen())
 
-		nodes = append(nodes, node)
-		overlays = append(overlays, overlay)
+// 		nodes = append(nodes, node)
+// 		overlays = append(overlays, overlay)
+// 	}
+
+// 	leader, err := noise.NewNode()
+// 	assert.NoError(t, err)
+// 	defer leader.Close()
+
+// 	overlay := kademlia.New()
+// 	hub := gossip.New(overlay)
+
+// 	leader.Bind(
+// 		overlay.Protocol(),
+// 		hub.Protocol(),
+// 	)
+
+// 	assert.NoError(t, leader.Listen())
+
+// 	var wg sync.WaitGroup
+// 	wg.Add(len(nodes) * (len(nodes) - 1))
+
+// 	for i := range nodes {
+// 		for j := range nodes {
+// 			i, j := i, j
+
+// 			if i == j {
+// 				continue
+// 			}
+
+// 			go func() {
+// 				_, err := nodes[i].Ping(context.TODO(), leader.Addr())
+// 				assert.NoError(t, err)
+
+// 				_, err = nodes[i].Ping(context.TODO(), nodes[j].Addr())
+// 				assert.NoError(t, err)
+
+// 				wg.Done()
+// 			}()
+// 		}
+// 	}
+
+// 	wg.Wait()
+
+// 	for _, node := range nodes {
+// 		// for _, client := range append(node.Inbound(), node.Outbound()...) {
+// 		for _, client := range append(node.Connectoins()) {
+// 			client.WaitUntilReady()
+// 		}
+// 	}
+
+// 	hub.Push(context.TODO(), []byte("hello!"))
+
+// 	cond.L.Lock()
+// 	for len(seen) != len(nodes) {
+// 		cond.Wait()
+// 	}
+// 	cond.L.Unlock()
+// }
+
+func TestProtocol_getSeen(t *testing.T) {
+
+	newP := New(nil, false)
+	// _ = newP
+
+	size := 80000
+	bigChunk := make([]byte, size)
+	for i := 0; i < size; i++ {
+		bigChunk[i] = 10
 	}
 
-	leader, err := noise.NewNode()
-	assert.NoError(t, err)
-	defer leader.Close()
+	newP.setSeen(bigChunk, nil)
+	// log.Printf("Hello")
 
-	overlay := kademlia.New()
-	hub := gossip.New(overlay)
+	// newP.getSeen(bigChunk)
+	// fmt.Println("getter is: ", newP.getSeen(bigChunk))
+	assert.False(t, newP.getSeen(bigChunk))
 
-	leader.Bind(
-		overlay.Protocol(),
-		hub.Protocol(),
-	)
-
-	assert.NoError(t, leader.Listen())
-
-	var wg sync.WaitGroup
-	wg.Add(len(nodes) * (len(nodes) - 1))
-
-	for i := range nodes {
-		for j := range nodes {
-			i, j := i, j
-
-			if i == j {
-				continue
-			}
-
-			go func() {
-				_, err := nodes[i].Ping(context.TODO(), leader.Addr())
-				assert.NoError(t, err)
-
-				_, err = nodes[i].Ping(context.TODO(), nodes[j].Addr())
-				assert.NoError(t, err)
-
-				wg.Done()
-			}()
-		}
-	}
-
-	wg.Wait()
-
-	for _, node := range nodes {
-		// for _, client := range append(node.Inbound(), node.Outbound()...) {
-		for _, client := range append(node.Connectoins()) {
-			client.WaitUntilReady()
-		}
-	}
-
-	hub.Push(context.TODO(), []byte("hello!"))
-
-	cond.L.Lock()
-	for len(seen) != len(nodes) {
-		cond.Wait()
-	}
-	cond.L.Unlock()
+	h := sha1.New()
+	h.Write([]byte(bigChunk))
+	bigChunkHash := h.Sum(nil)
+	newP.setSeen(bigChunkHash, nil)
+	assert.True(t, newP.getSeen(bigChunkHash))
+	// type fields struct {
+	// 	node           *noise.Node
+	// 	overlay        *kademlia.Protocol
+	// 	events         Events
+	// 	relayChan      chan Message
+	// 	msgSentCounter uint32
+	// 	Logging        bool
+	// 	seen           *fastcache.Cache
+	// }
+	// type args struct {
+	// 	k []byte
+	// }
+	// tests := []struct {
+	// 	name   string
+	// 	fields fields
+	// 	args   args
+	// 	want   bool
+	// }{
+	// 	// TODO: Add test cases.
+	// }
+	// for _, tt := range tests {
+	// 	t.Run(tt.name, func(t *testing.T) {
+	// 		p := &Protocol{
+	// 			node:           tt.fields.node,
+	// 			overlay:        tt.fields.overlay,
+	// 			events:         tt.fields.events,
+	// 			relayChan:      tt.fields.relayChan,
+	// 			msgSentCounter: tt.fields.msgSentCounter,
+	// 			Logging:        tt.fields.Logging,
+	// 			seen:           tt.fields.seen,
+	// 		}
+	// 		if got := p.getSeen(tt.args.k); got != tt.want {
+	// 			t.Errorf("Protocol.getSeen() = %v, want %v", got, tt.want)
+	// 		}
+	// 	})
+	// }
 }

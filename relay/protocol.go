@@ -4,6 +4,7 @@ package relay
 
 import (
 	"context"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"sync/atomic"
@@ -67,10 +68,29 @@ func (p *Protocol) Bind(node *noise.Node) error {
 	return nil
 }
 
+func (p *Protocol) setSeen(k, v []byte) {
+	p.seen.SetBig(k, v)
+}
+
+func (p *Protocol) getSeen(k []byte) bool {
+	return p.seen.Has(k)
+}
+
+func getShaHash(data []byte) []byte {
+	h := sha1.New()
+	h.Write([]byte(data))
+	return h.Sum(nil)
+}
+
 // Push gossips a single message concurrently to all peers this node is aware of, on the condition that this node
 // believes that the aforementioned peer has not received data before. A context may be provided to cancel Push, as it
 // blocks the current goroutine until the gossiping of a single message is done. Any errors pushing a message to a
 // particular peer is ignored.
+
+func (p *Protocol) printMsgData(msg Message) {
+	fmt.Printf("From: %v - To: %v - CODE: %v", msg.From.String(), msg.To, msg.Code)
+}
+
 func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	// fmt.Println("Relay 1")
 	if changeRandomN {
@@ -82,7 +102,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	}
 
 	data := msg.Marshal()
-	p.seen.SetBig(p.hash(p.node.ID(), data), nil)
+	p.seen.SetBig(getShaHash(p.hash(p.node.ID(), data)), nil)
 
 	localPeerAddress := p.overlay.Table().AddressFromPK(msg.To)
 	// fmt.Println(".")
@@ -115,22 +135,23 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 		go func(gId noise.ID, gKey []byte, gmsg Message) {
 			// defer wg.Done()
 
-			if p.seen.Has(gKey) {
+			if p.seen.Has(getShaHash(gKey)) {
 				fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", gId, hex.EncodeToString(gKey))
 				return
 			}
 			if len(gKey) > 64000 {
-				fmt.Printf("torture Relay ID %v hash %v\n", gId, len(gKey))
-
+				fmt.Printf("WARN torture Relay ID %v hash %v\n", gId, len(gKey))
+				p.printMsgData(msg)
 			} else {
 				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", gId, len(gKey), hex.EncodeToString(gKey))
+				// p.printMsgData(msg)
 			}
 			if err := p.node.SendMessage(ctx, gId.Address, gmsg); err != nil {
 				// fmt.Printf("Relay send msg Fucked %v\n", err)
 				return
 			}
 
-			p.seen.SetBig(gKey, nil)
+			p.seen.SetBig(getShaHash(gKey), nil)
 		}(id, key, msg)
 	}
 
@@ -156,10 +177,10 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 
 	// fmt.Printf("Handle received msg %v\n", msg.String())
 	data := msg.Marshal()
-	p.seen.SetBig(p.hash(ctx.ID(), data), nil) // Mark that the sender already has this data.
+	p.seen.SetBig(getShaHash(p.hash(ctx.ID(), data)), nil) // Mark that the sender already has this data.
 	// fmt.Printf("Seen Hash set in Handle  for ID %v and data %v  %v\n", ctx.ID(), hex.EncodeToString(p.hash(ctx.ID(), data)))
 
-	self := p.hash(p.node.ID(), data)
+	self := getShaHash(p.hash(p.node.ID(), data))
 
 	if p.seen.Has(self) {
 		return nil
