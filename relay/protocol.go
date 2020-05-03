@@ -136,7 +136,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 			// defer wg.Done()
 
 			if p.seen.Has(getShaHash(gKey)) {
-				fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", gId, hex.EncodeToString(gKey))
+				// fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", gId, hex.EncodeToString(gKey))
 				return
 			}
 			if len(gKey) > 64000 {
@@ -144,7 +144,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 				p.printMsgData(msg)
 			} else {
 				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", gId, len(gKey), hex.EncodeToString(gKey))
-				// p.printMsgData(msg)
+				p.printMsgData(msg)
 			}
 			if err := p.node.SendMessage(ctx, gId.Address, gmsg); err != nil {
 				// fmt.Printf("Relay send msg Fucked %v\n", err)
