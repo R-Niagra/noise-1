@@ -215,7 +215,7 @@ func (ntw *Network) Broadcast(code byte, data []byte) {
 	msg.Data = data
 	msg.Code = code
 
-	ntw.broadcastHub.Push(context.TODO(), msg, true)
+	ntw.broadcastHub.Push(context.TODO(), msg, true, msg.From)
 	// cancel()
 }
 
@@ -231,7 +231,7 @@ func (ntw *Network) RelayToPB(peerID noise.PublicKey, code byte, data []byte) {
 	msg.To = peerID
 	msg.Code = code
 
-	ntw.relayHub.Relay(context.TODO(), msg, true)
+	ntw.relayHub.Relay(context.TODO(), msg, true, msg.From)
 	// cancel()
 }
 

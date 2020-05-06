@@ -5,6 +5,7 @@ package relay
 import (
 	"context"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync/atomic"
@@ -91,7 +92,7 @@ func (p *Protocol) printMsgData(msg Message) {
 	fmt.Printf("From: %v - To: %v - CODE: %v", msg.From.String(), msg.To, msg.Code)
 }
 
-func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
+func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool, Fromid noise.ID) {
 	// fmt.Println("Relay 1")
 	if changeRandomN {
 		msg.randomN = p.msgSentCounter
@@ -102,7 +103,10 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	}
 
 	data := msg.Marshal()
-	p.seen.SetBig(getShaHash(p.hash(p.node.ID(), data)), nil)
+	dataHash := p.hash(data)
+	if !p.seen.Has(dataHash) {
+		p.seen.SetBig(dataHash, nil)
+	}
 
 	localPeerAddress := p.overlay.Table().AddressFromPK(msg.To)
 	// fmt.Println(".")
@@ -130,29 +134,33 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool) {
 	// wg.Add(len(peers))
 
 	for _, id := range peers {
-		id, key := id, p.hash(id, data)
+		id, key := id, dataHash
 		// key := p.hash(id, data)
-		go func(gId noise.ID, gKey []byte, gmsg Message) {
+		if Fromid.ID.String() == id.ID.String() {
+			continue
+		}
+
+		go func() {
 			// defer wg.Done()
 
-			if p.seen.Has(getShaHash(gKey)) {
-				// fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", gId, hex.EncodeToString(gKey))
+			if p.seen.Has(key) {
+				// fmt.Printf("Relay ID %v Alread seen Msg!! %v\n", id, hex.EncodeToString(key))
 				return
 			}
-			if len(gKey) > 64000 {
-				fmt.Printf("WARN torture Relay ID %v hash %v\n", gId, len(gKey))
+			if len(key) > 64000 {
+				fmt.Printf("WARN torture Relay ID %v hash %v\n", id, len(key))
 				p.printMsgData(msg)
 			} else {
-				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", gId, len(gKey), hex.EncodeToString(gKey))
+				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", id, len(key), hex.EncodeToString(key))
 				p.printMsgData(msg)
 			}
-			if err := p.node.SendMessage(ctx, gId.Address, gmsg); err != nil {
+			if err := p.node.SendMessage(ctx, id.Address, msg); err != nil {
 				// fmt.Printf("Relay send msg Fucked %v\n", err)
 				return
 			}
 
-			p.seen.SetBig(getShaHash(gKey), nil)
-		}(id, key, msg)
+			// p.seen.SetBig(key, nil)
+		}()
 	}
 
 	// wg.Wait()
@@ -177,16 +185,22 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 
 	// fmt.Printf("Handle received msg %v\n", msg.String())
 	data := msg.Marshal()
-	p.seen.SetBig(getShaHash(p.hash(ctx.ID(), data)), nil) // Mark that the sender already has this data.
-	// fmt.Printf("Seen Hash set in Handle  for ID %v and data %v  %v\n", ctx.ID(), hex.EncodeToString(p.hash(ctx.ID(), data)))
-
-	self := getShaHash(p.hash(p.node.ID(), data))
-
-	if p.seen.Has(self) {
+	dataHash := p.hash(data)
+	if p.seen.Has(dataHash) {
 		return nil
 	}
 
-	p.seen.SetBig(self, nil) // Mark that we already have this data.
+	// p.seen.SetBig(p.hash(ctx.ID(), data), nil) // Mark that the sender already has this data.
+	p.seen.SetBig(dataHash, nil) // Mark that the sender already has this data.
+	// fmt.Printf("Seen Hash set in Handle  for ID %v and data %v  %v\n", ctx.ID(), hex.EncodeToString(p.hash(ctx.ID(), data)))
+
+	// self := p.hash(p.node.ID(), data)
+
+	// if p.seen.Has(self) {
+	// 	return nil
+	// }
+
+	// p.seen.SetBig(self, nil) // Mark that we already have this data.
 
 	if msg.To == p.node.ID().ID {
 		if p.Logging {
@@ -194,8 +208,8 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 		}
 		p.relayChan <- msg
 	} else {
-		fmt.Println("Starting torture go-routine....")
-		p.Relay(context.TODO(), msg, false)
+		// fmt.Println("Relay Handle Relaying further")
+		go p.Relay(context.TODO(), msg, false, ctx.ID())
 	}
 
 	// if p.events.OnGossipReceived != nil {
@@ -207,8 +221,12 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 	return nil
 }
 
-func (p *Protocol) hash(id noise.ID, data []byte) []byte {
-	return append(id.ID[:], data...)
+// func (p *Protocol) hash(id noise.ID, data []byte) []byte {
+func (p *Protocol) hash(data []byte) []byte {
+	hasher := sha256.New()
+	hasher.Write(data)
+	return hasher.Sum(nil)
+	// return append(id.ID[:], data...)
 }
 
 func (p *Protocol) GetRelayChan() chan Message {

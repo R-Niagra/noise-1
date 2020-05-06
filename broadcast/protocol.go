@@ -4,6 +4,7 @@ package broadcast
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"sync/atomic"
 
@@ -69,7 +70,7 @@ func (p *Protocol) Bind(node *noise.Node) error {
 // believes that the aforementioned peer has not received data before. A context may be provided to cancel Push, as it
 // blocks the current goroutine until the gossiping of a single message is done. Any errors pushing a message to a
 // particular peer is ignored.
-func (p *Protocol) Push(ctx context.Context, msg Message, changeRandomN bool) {
+func (p *Protocol) Push(ctx context.Context, msg Message, changeRandomN bool, Fromid noise.ID) {
 	if changeRandomN {
 		msg.randomN = p.msgSentCounter
 		atomic.AddUint32(&p.msgSentCounter, 1)
@@ -79,27 +80,34 @@ func (p *Protocol) Push(ctx context.Context, msg Message, changeRandomN bool) {
 	}
 
 	data := msg.Marshal()
-	p.seen.SetBig(p.hash(p.node.ID(), data), nil)
+	// p.seen.SetBig(p.hash(p.node.ID(), data), nil)
+	dataHash := p.hash(data)
+	if !p.seen.Has(dataHash) {
+		p.seen.SetBig(dataHash, nil)
+	}
 
 	peers := p.overlay.Table().Entries()
 	// var wg sync.WaitGroup
 	// wg.Add(len(peers))
 
 	for _, id := range peers {
-		id, key := id, p.hash(id, data)
-
+		// id, key := id, p.hash(id, data)
+		id, _ := id, p.hash(data)
+		if Fromid.ID.String() == id.ID.String() {
+			continue
+		}
 		go func() {
 			// defer wg.Done()
 
-			if p.seen.Has(key) {
-				return
-			}
+			// if p.seen.Has(key) {
+			// 	return
+			// }
 
 			if err := p.node.SendMessage(ctx, id.Address, msg); err != nil {
 				return
 			}
 
-			p.seen.SetBig(key, nil)
+			// p.seen.SetBig(key, nil)
 		}()
 	}
 
@@ -124,15 +132,17 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 	}
 
 	data := msg.Marshal()
-	p.seen.SetBig(p.hash(ctx.ID(), data), nil) // Mark that the sender already has this data.
-
-	self := p.hash(p.node.ID(), data)
-
-	if p.seen.Has(self) {
+	// p.seen.SetBig(p.hash(ctx.ID(), data), nil) // Mark that the sender already has this data.
+	dataHash := p.hash(data)
+	if p.seen.Has(dataHash) {
 		return nil
 	}
 
-	p.seen.SetBig(self, nil) // Mark that we already have this data.
+	p.seen.SetBig(dataHash, nil) // Mark that the sender already has this data.
+
+	// self := p.hash(data)
+	// self := p.hash(p.node.ID(), data)
+	// p.seen.SetBig(self, nil) // Mark that we already have this data.
 
 	p.relayChan <- msg
 	if p.Logging {
@@ -144,13 +154,16 @@ func (p *Protocol) Handle(ctx noise.HandlerContext) error {
 	// 	}
 	// }
 
-	p.Push(context.Background(), msg, false)
+	p.Push(context.Background(), msg, false, ctx.ID())
 
 	return nil
 }
 
-func (p *Protocol) hash(id noise.ID, data []byte) []byte {
-	return append(id.ID[:], data...)
+func (p *Protocol) hash(data []byte) []byte {
+	hasher := sha256.New()
+	hasher.Write(data)
+	return hasher.Sum(nil)
+	// return append(id.ID[:], data...)
 }
 
 func (p *Protocol) GetBroadcastChan() chan Message {
