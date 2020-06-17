@@ -6,7 +6,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"crypto/sha256"
-	"encoding/hex"
+	// "encoding/hex"
 	"fmt"
 	"sync/atomic"
 
@@ -98,7 +98,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool, F
 		msg.randomN = p.msgSentCounter
 		atomic.AddUint32(&p.msgSentCounter, 1)
 		if p.Logging {
-			fmt.Printf("Sending Relay Msg at Node %v - %v\n", p.node.Addr(), msg.String())
+			// fmt.Printf("Sending Relay Msg at Node %v - %v\n", p.node.Addr(), msg.String())
 		}
 	}
 
@@ -151,7 +151,7 @@ func (p *Protocol) Relay(ctx context.Context, msg Message, changeRandomN bool, F
 				fmt.Printf("WARN torture Relay ID %v hash %v\n", id, len(key))
 				p.printMsgData(msg)
 			} else {
-				fmt.Printf("torture Relay ID %v size %v ,hash %v\n", id, len(key), hex.EncodeToString(key))
+				// fmt.Printf("torture Relay ID %v size %v ,hash %v\n", id, len(key), hex.EncodeToString(key))
 				p.printMsgData(msg)
 			}
 			if err := p.node.SendMessage(ctx, id.Address, msg); err != nil {

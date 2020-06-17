@@ -236,6 +236,7 @@ func (c *Client) outbound(ctx context.Context, addr string) {
 	go c.writeLoop()
 	c.recvLoop()
 	c.close()
+	fmt.Println("Closing the outbound con")
 
 	c.Logger().Debug("Peer connection closed.")
 
@@ -527,6 +528,7 @@ func (c *Client) handshake() {
 		if protocol.OnPeerConnected == nil {
 			continue
 		}
+				// fmt.Println("handshake client: ", c.id, "peer_id", id.ID.String(), "peer_addr", id.Address, "Cliend ID Address", c.id.Address, " remote_addr", c.conn.RemoteAddr().String())
 
 		protocol.OnPeerConnected(c)
 	}

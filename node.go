@@ -243,17 +243,21 @@ func (n *Node) Listen() error {
 		)
 
 		for {
+			// fmt.Println("Waiting for the conn")			
 			conn, err := n.listener.Accept()
 			if err != nil {
 				n.listenerDone <- err
+				panic("Exiting the listener")
 				break
 			}
-
+			
 			addr := conn.RemoteAddr().String()
+			// fmt.Println("Got a conn", addr)
 			n.logger.Info("Incoming Peer ", zap.String("Peer Addr ", addr))
 
 			client, exists := n.connections.get(n, addr)
 			if !exists {
+				// fmt.Println("inbounding...")
 				go client.inbound(conn, addr)
 			}
 		}
@@ -261,6 +265,31 @@ func (n *Node) Listen() error {
 
 	return nil
 }
+
+
+func (n *Node) DisconWithPeer(add string) {
+
+	fmt.Println("before disconns: ",len(n.connections.entries))
+	// n.connections.PrintClientMap(n.id.Address)
+
+
+	client,exists := n.connections.CheckEntry(n, add)
+	if exists {
+		
+		client.Close()
+		client.waitUntilClosed()
+		n.connections.remove(add)
+
+		fmt.Println("Connection with : ", add, " closed")
+	}else{
+		fmt.Println("DISConnection with : ", add, " failed")
+	}
+
+	fmt.Println("after disconns: ",len(n.connections.entries))
+
+
+}
+
 
 // RegisterMessage registers a Go type T that implements the Serializable interface with an associated deserialize
 // function whose signature comprises of func([]byte) (T, error). RegisterMessage should be called in the following
@@ -423,7 +452,8 @@ func (n *Node) Close() error {
 
 func (n *Node) dialIfNotExists(ctx context.Context, addr string) (*Client, error) {
 	var err error
-	// fmt.Println("Here dialIfNotExists")
+	// fmt.Println("dialIfNotExists addr: ", addr)
+
 
 	for i := uint(0); i < n.maxDialAttempts; i++ {
 		// client, exists := n.outbound.get(n, addr)
@@ -432,7 +462,15 @@ func (n *Node) dialIfNotExists(ctx context.Context, addr string) (*Client, error
 		if !exists {
 			// fmt.Printf("\n Client not found %v adding to OutBound \n", addr)
 			go client.outbound(ctx, addr)
+			// n.connections.PrintClientMap(n.id.Address)
+
+
 		}
+		// else{
+			// fmt.Println("conn already existed!!!!")
+			// n.connections.PrintClientMap(n.id.Address)
+
+		// }
 
 		// fmt.Println("Here dialIfNotExists3")
 		select {
@@ -446,7 +484,6 @@ func (n *Node) dialIfNotExists(ctx context.Context, addr string) (*Client, error
 			err = client.Error()
 		}
 
-		// fmt.Println("Here dialIfNotExists4")
 		if err == nil {
 			// fmt.Println("returning fomr dialIfNotExist client found")
 			return client, nil
@@ -454,7 +491,7 @@ func (n *Node) dialIfNotExists(ctx context.Context, addr string) (*Client, error
 
 		// fmt.Println("Here dialIfNotExists Error %v", err)
 		client.close()
-		client.waitUntilClosed()
+		// client.waitUntilClosed()
 
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			for _, protocol := range n.protocols {

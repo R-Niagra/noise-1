@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"sync"
+	"fmt"
 )
 
 type clientMapEntry struct {
@@ -28,12 +29,34 @@ func newClientMap(cap uint) *clientMap {
 	}
 }
 
+//PrintClientMap prints the client map
+func (c *clientMap) PrintClientMap(myAdd string) {
+	fmt.Println(".")
+	fmt.Println("Printing the client map...",myAdd)
+	for key, val := range c.entries {
+		fmt.Println("addr is: ", key, " client is: ", val.client.ID().Address)
+	}
+	fmt.Println(".")
+
+}
+
+//CheckEntry checks if entry exist in the client map
+func (c *clientMap) CheckEntry(n *Node, addr string) (*Client, bool) {
+	entry, exists := c.entries[addr]
+	if exists {
+		return entry.client, true
+	}
+
+	return nil, false
+}
+
 func (c *clientMap) get(n *Node, addr string) (*Client, bool) {
 	c.Lock()
 	defer c.Unlock()
 
 	entry, exists := c.entries[addr]
-	// n.logger.Info(" \n Connection Entries for Address", zap.String("Addr ", addr), zap.String("Entries ", c.entries))
+	// fmt.Println("entry against adde: ",addr,entry.client.ID())
+	// n.logger.Info(" \n Connection Entries for Address", zap.String("Addr ", addr),  c.entries[addr])
 	if !exists {
 		// fmt.Printf(" \n Connection not exist in Entries for Address %v %v \n", addr, c.entries)
 		if uint(len(c.entries)) == n.maxInboundConnections {

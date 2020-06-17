@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/R-Niagra/noise-1"
 	"github.com/R-Niagra/noise-1/kademlia"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 const (

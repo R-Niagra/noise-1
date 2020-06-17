@@ -66,6 +66,7 @@ func (t *Table) Bucket(target noise.PublicKey) []noise.ID {
 // table bucket, it is moved to the head of the bucket and false is returned. If the ID has yet to exist, it is
 // appended to the head of its intended bucket and true is returned.
 func (t *Table) Update(target noise.ID) (bool, error) {
+	// fmt.Println("Table got updated with: ", target)
 	if target.ID == noise.ZeroPublicKey {
 		return false, nil
 	}
@@ -251,7 +252,7 @@ func (t *Table) Entries() []noise.ID {
 			entries = append(entries, e.Value.(noise.ID))
 		}
 	}
-
+	// fmt.Println("Broadcast entries: ", entries)
 	return entries
 }
 

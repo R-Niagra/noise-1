@@ -19,9 +19,9 @@ import (
 
 const (
 	// DefaultBootstrapTimeout is the default timeout for bootstrapping with each peer.
-	DefaultBootstrapTimeout = time.Second * 10
+	DefaultBootstrapTimeout = 10 * time.Second
 	// DefaultPeerThreshold is the default threshold above which bootstrapping is considered successful
-	DefaultPeerThreshold = 3
+	DefaultPeerThreshold = 8
 	MsgChanSize          = 64
 )
 
@@ -116,7 +116,7 @@ func New(hostStr string, port uint16, privatekey noise.PrivateKey, logger *zap.L
 		relayHub.Protocol(),
 	)
 
-	go node.Listen()
+	node.Listen()
 	return &Network{
 		node:          node,
 		overlay:       overlay,
@@ -148,10 +148,12 @@ func (ntw *Network) Bootstrap(peerAddrs []string, timeout time.Duration, peerThr
 		}
 
 	}
+	fmt.Println("Bootstrap after ping no of peers: ", ntw.GetNumPeers())
 
 	if ntw.GetNumPeers() <= peerThreshold {
 		ntw.Discover()
 	}
+	fmt.Println("Bootstrap after discover no of peers: ", ntw.GetNumPeers())
 
 	return true
 }
@@ -169,6 +171,33 @@ func (ntw *Network) Discover() {
 	} else {
 		fmt.Printf("Did not discover any peers.\n")
 	}
+}
+
+//DisconWithPeers discionnects with the given ids
+func (ntw *Network) DisconWithPeers(ids []noise.ID) {
+	// for _, id := range ids {
+	// _, _ = ntw.overlay.Table().Delete(id.ID) //Delete overlay entries from the node peers
+	// if done == true {
+	// 	fmt.Println("Success Disconnection with ", id)
+	// } else {
+	// 	fmt.Println("Disconnection failed with ", id)
+	// 	}
+	// }
+
+	for _, id := range ids {
+		// _, done := ntw.overlay.Table().Delete(id.ID) //Delete overlay entries from the node peers
+		ntw.node.DisconWithPeer(id.Address)
+	}
+
+	for _, id := range ids {
+		_, _ = ntw.overlay.Table().Delete(id.ID) //Delete overlay entries from the node peers
+		// if done == true {
+		// 	fmt.Println("Success Disconnection with ", id)
+		// } else {
+		// 	fmt.Println("Disconnection failed with ", id)
+		// }
+	}
+
 }
 
 // peers prints out all peers we are already aware of.
